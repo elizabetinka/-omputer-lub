@@ -21,7 +21,7 @@ make
 ```
 - Запуск тестов:
 ```bash
-./tests/sortTests
+./tests/Tests
 ```
 
 # Формат входных данных
