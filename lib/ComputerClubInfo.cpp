@@ -8,7 +8,10 @@
 
 time_t ComputerClubInfo::getTimeSep(std::ifstream& fin, char sep) {
     std::string time_str;
-    std::getline(fin, time_str, sep);
+
+    if (!(std::getline(fin, time_str, sep))){
+        throw std::runtime_error("can't read time_str");
+    }
     time_t tmp = time(NULL);
     std::tm* t = std::localtime(&tmp);
     std::istringstream ss(time_str);
@@ -34,33 +37,42 @@ void ComputerClubInfo::Parse(const char* filename) {
     }
     size_t pos = fin.tellg();
     try {
-        fin >> tableCount;
+        if (!(fin >> tableCount)){
+            throw std::runtime_error("can't read tableCount");
+        }
         pos = fin.tellg();
         start_time = getTimeSep(fin, ' ');
         end_time = getTimeSep(fin, '\n');
         pos = fin.tellg();
-        fin >> oneHourCost;
-
+        if (!(fin >> oneHourCost)){
+            throw std::runtime_error("can't read cost");
+        }
         while (!fin.eof()) {
             pos = fin.tellg();
             time_t tmp = getTimeSep(fin, ' ');
-            std::tm* t = localtime(&tmp);
             uint64_t id;
-            fin >> id;
+            if (!(fin >> id)){
+                throw std::runtime_error("can't read id");
+            }
             if (id == 0 || id > 5) {
                 throw std::runtime_error("id of coming events can be only 1,2,3,4");
             }
 
             std::string body;
-            std::getline(fin, body, '\n');
+            if (!(std::getline(fin, body, '\n'))){
+                throw std::runtime_error("can't read body");
+            }
+
             body.erase(0, 1);
             events.emplace_back(id, tmp, body);
         }
     }
     catch (...) {
+        fin.clear();
         fin.seekg(pos, std::ios_base::beg);
         std::string ex;
-        std::getline(fin, ex);
+
+        std::getline(fin, ex,'\n');
         fin.close();
         throw parce_error(ex);
     }
@@ -119,8 +131,12 @@ void ComputerClubInfo::AnalysisEvent(std::map<std::string, int64_t>& people_in_c
             std::stringstream ss(event.body);
             uint64_t table;
 
-            ss >> client;
-            ss >> table;
+            if (!(ss >> client)){
+                throw parce_error(getEventString(event));
+            }
+            if (!(ss >> table)){
+                throw parce_error(getEventString(event));
+            }
 
             if (table <= 0 || table > tableCount) {
                 throw parce_error(getEventString(event));
@@ -165,6 +181,15 @@ void ComputerClubInfo::AnalysisEvent(std::map<std::string, int64_t>& people_in_c
         case 4: {
             if (!people_in_club.contains(event.body)) {
                 events_res.emplace_back(13, event.start_time, "ClientUnknown");
+                break;
+            }
+            if (people_in_club[event.body]<NotHaveTable){
+                people_in_club.erase(event.body);
+                break;
+            }
+            if (people_in_club[event.body]<Wait){
+                people_in_club.erase(event.body);
+                --in_queqe;
                 break;
             }
             --table_use;

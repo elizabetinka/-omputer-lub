@@ -43,8 +43,8 @@ TEST(ComputerClubTestSuite, SimpleRunTest) {
 
     time_t end_time = info.getEndTime();
     struct tm* endTime = localtime(&end_time);
-    ASSERT_EQ(startTime->tm_hour,19);
-    ASSERT_EQ(startTime->tm_min,0);
+    ASSERT_EQ(endTime->tm_hour,19);
+    ASSERT_EQ(endTime->tm_min,0);
 
     std::vector<ComputerClubEvent> events = info.getEvents();
     std::vector<uint64_t> ans_for_idEvents = {1,13,1,1,3,13,2,2,1,2,1,2,13,3,4,12,4,4,11};
